@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Grid, Paper } from '@mui/material/';
+import { Grid, Paper, TextField } from '@mui/material/';
 import TopicSelector from './components/TopicSelector';
 import NotesList from './components/NoteList';
 import NewNoteForm from './components/NewNote';
@@ -36,12 +36,13 @@ function App() {
     <div>
       <Grid container spacing={3}>
         <Grid item xs={12}>
-          <Paper>
-            Topic:<TopicSelector onChange={handleTopicChange} />
+          <Paper sx={{margin:2}}>
+            <p style={{ margin: '2px' }}>Topic:</p>
+            <TopicSelector onChange={handleTopicChange} />
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Paper>
+          <Paper sx={{margin:2}}> 
             {selectedTopic ? (
               <div>Notes:<NotesList topic={selectedTopic} /></div>
             ) : (
@@ -49,8 +50,8 @@ function App() {
             )}
           </Paper>
         </Grid>
-        <Grid item xs={12} md={6}>
-          <Paper>
+        <Grid  item xs={12} md={6}>
+          <Paper sx={{margin:2}}>
             {selectedTopic ? (
               <NewNoteForm topic={selectedTopic} onSubmit={handleNoteSubmit} />
             ) : (
@@ -58,7 +59,7 @@ function App() {
             )}
           </Paper>
         </Grid>
-        <Grid item xs={12}>
+        <Grid sx={{margin:2}} item xs={12}>
           <Paper>
             <WikipediaSearch />
           </Paper>

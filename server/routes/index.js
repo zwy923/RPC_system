@@ -7,12 +7,16 @@ const parser = new xml2js.Parser();
 const builder = new xml2js.Builder();
 
 
+router.get('/',(req,res)=>{
+  res.send('Main server is running.')
+})
+
 // Set up route for creating new notes
-router.post('/notes', (req, res) => {
-  const { topic, text, name, timestamp } = req.body;
+router.post('/notes', async (req, res) => {
+  const { topic, text, name, timestamp, query } = req.body;
   // Parse the XML data from the file
   const xmlData = fs.readFileSync('notes.xml', 'utf8');
-  parser.parseString(xmlData, (err, result) => {
+  parser.parseString(xmlData, async (err, result) => {
     if (err) throw err;
     // Find the topic in the XML data or create a new topic if it doesn't exist
     const topicNode = result.data.topic.find(t => t.$.name === topic);
@@ -28,6 +32,16 @@ router.post('/notes', (req, res) => {
       text: text,
       timestamp: timestamp
     };
+    if (query) {
+      // Search Wikipedia for the query
+      const response = await axios.get(`https://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch=${query}&utf8=&formatversion=2`);
+      const searchResults = response.data.query.search;
+      if (searchResults.length > 0) {
+        // Append the Wikipedia link to the note
+        const wikipediaLink = `https://en.wikipedia.org/wiki/${searchResults[0].title.replace(/ /g, '_')}`;
+        note.text += `\nWikipedia article: ${wikipediaLink}`;
+      }
+    }
     result.data.topic.forEach(t => {
       if (t.$.name === topic) {
         t.note.push(note);
@@ -39,7 +53,7 @@ router.post('/notes', (req, res) => {
     // Send a response to the client
     res.send('Note created successfully');
   });
-});
+})
 
 
 router.get('/topics', (req, res) => {

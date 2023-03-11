@@ -21,8 +21,8 @@ function NotesList({ topic }) {
         {notes.map(note => (
           <ListItem key={note.$.name}>
             <ListItemText
-              primary={note.$.name}
-              secondary={note.text}
+              primary={`${note.$.name}-----------<${note.timestamp}>`}
+              secondary={`${note.text}`}
             />
           </ListItem>
         ))}

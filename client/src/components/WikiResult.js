@@ -20,15 +20,15 @@ function WikipediaSearch({ onSubmit }) {
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <TextField
+        <TextField sx={{margin:2}}
           label="Search Wikipedia"
           value={query}
           onChange={event => setQuery(event.target.value)}
-          fullWidth
+          AutoWidth
         />
-        <Button type="submit" color="primary">Search</Button>
+        <Button type="submit" color="primary" sx={{margin:2}}>Search</Button>
       </form>
-      <List>
+      <List sx={{margin:2}}>
         {results.map(result => (
           <ListItem key={result.pageid}>
             <a href={result.fullurl} target="_blank" rel="noreferrer">

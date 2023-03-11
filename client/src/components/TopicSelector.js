@@ -27,12 +27,12 @@ function TopicSelector({ onChange }) {
 
   return (
     <div >
-      <Select
+      <Select sx={{margin:2}}
         value={selectedTopic}
         onChange={handleTopicChange}
       >
         {topics.map(topic => (
-          <MenuItem value={topic} key={topic}>{topic}
+          <MenuItem sx={{margin:2}} value={topic} key={topic}>{topic}
           </MenuItem>
           
         ))}
