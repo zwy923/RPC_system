@@ -1,91 +1,104 @@
 var express = require('express');
 var router = express.Router();
-
+const fs = require('fs');
+const axios = require('axios')
 const xml2js = require('xml2js');
-const axios = require('axios');
+const parser = new xml2js.Parser();
+const builder = new xml2js.Builder();
 
 
 // Set up route for creating new notes
 router.post('/notes', (req, res) => {
-  // Parse the XML data from the mock database file
-  xml2js.parseString(req.body.xmlData, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send('Error parsing XML data');
-    } else {
-      // Check if the topic already exists in the XML file
-      const topic = req.body.topic;
-      const note = {
-        name: req.body.noteName,
-        text: req.body.noteText,
-        timestamp: req.body.noteTimestamp
-      };
-      let topicExists = false;
-      for (let i = 0; i < result.data.topic.length; i++) {
-        if (result.data.topic[i].$.name === topic) {
-          topicExists = true;
-          result.data.topic[i].note.push(note);
-          break;
-        }
-      }
-      // If the topic doesn't exist, create a new XML entry for it
-      if (!topicExists) {
-        const newTopic = {
-          $: {
-            name: topic
-          },
-          note: [note]
-        };
-        result.data.topic.push(newTopic);
-      }
-      // Convert the XML data back to a string and send it in the response
-      const builder = new xml2js.Builder();
-      const newXmlData = builder.buildObject(result);
-      res.send(newXmlData);
+  const { topic, text, name, timestamp } = req.body;
+  // Parse the XML data from the file
+  const xmlData = fs.readFileSync('notes.xml', 'utf8');
+  parser.parseString(xmlData, (err, result) => {
+    if (err) throw err;
+    // Find the topic in the XML data or create a new topic if it doesn't exist
+    const topicNode = result.data.topic.find(t => t.$.name === topic);
+    if (!topicNode) {
+      result.data.topic.push({
+        $: { name: topic },
+        note: []
+      });
     }
+    // Add the new note to the topic
+    const note = {
+      $: { name: `${name}` },
+      text: text,
+      timestamp: timestamp
+    };
+    result.data.topic.forEach(t => {
+      if (t.$.name === topic) {
+        t.note.push(note);
+      }
+    });
+    // Convert the XML data back to a string and write it to the file
+    const xmlString = builder.buildObject(result);
+    fs.writeFileSync('notes.xml', xmlString);
+    // Send a response to the client
+    res.send('Note created successfully');
   });
 });
 
-// Set up route for retrieving notes based on topic
-router.get('/notes', (req, res) => {
-  // Parse the XML data from the mock database file
-  xml2js.parseString(req.body.xmlData, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send('Error parsing XML data');
+
+router.get('/topics', (req, res) => {
+  // Parse the XML data from the file
+  const xmlData = fs.readFileSync('notes.xml', 'utf8');
+  parser.parseString(xmlData, (err, result) => {
+    if (err) throw err;
+    // Extract the topic names from the XML data
+    const topics = result.data.topic.map(t => t.$.name);
+    // Send the topic names as a response to the client
+    res.send(topics);
+  });
+});
+
+router.get('/notes/:topic', (req, res) => {
+  const { topic } = req.params;
+  // Parse the XML data from the file
+  const xmlData = fs.readFileSync('notes.xml', 'utf8');
+  parser.parseString(xmlData, (err, result) => {
+    if (err) throw err;
+    // Find the topic node in the XML data
+    const topicNode = result.data.topic.find(t => t.$.name === topic);
+    if (!topicNode) {
+      // If the topic node is not found, send a 404 error to the client
+      res.status(404).send('Topic not found');
     } else {
-      // Search the XML data for the given topic and return the results
-      const topic = req.query.topic;
-      let notes = [];
-      for (let i = 0; i < result.data.topic.length; i++) {
-        if (result.data.topic[i].$.name === topic) {
-          notes = result.data.topic[i].note;
-          break;
-        }
-      }
+      // Extract the notes under the topic node
+      const notes = topicNode.note;
+      // Send the notes as a response to the client
       res.send(notes);
     }
   });
 });
 
-// Set up route for querying Wikipedia API for more information on a given topic
-router.get('/wikipedia', (req, res) => {
-  const searchTerm = req.query.searchTerm;
-  const url = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${searchTerm}&format=json&origin=*`;
-  axios.get(url)
+
+router.get('/wikipedia/:query', (req, res) => {
+  const { query } = req.params;
+  // Make a request to the Wikipedia API using axios
+  axios.get(`https://en.wikipedia.org/w/api.php?action=opensearch&search=${query}&format=json`)
     .then(response => {
-      const data = response.data;
-      const searchResults = {
-        searchTerm: data[0],
-        articles: data[1],
-        descriptions: data[2],
-        links: data[3]
-      };
-      res.send(searchResults);
+      // Extract the relevant information from the API response
+      const [searchQuery, searchResults, searchSnippet, searchUrls] = response.data;
+      // Combine the search results into an array of objects
+      const results = searchResults.map((result, i) => {
+        return {
+          title: result,
+          snippet: searchSnippet[i],
+          url: searchUrls[i]
+        };
+      });
+      // Send the results as a response to the client
+      res.send(results);
     })
     .catch(error => {
-      console.error(error);
-      res.status(500).send('Error querying Wikipedia API');
+      console.log(error);
+      // If there's an error, send a 500 error to the client
+      res.status(500).send('Error retrieving Wikipedia information');
     });
 });
+
+
 module.exports = router;
