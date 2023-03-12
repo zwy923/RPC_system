@@ -21,9 +21,9 @@ The following command is entered in the root directory
 
 #### Start client
 
-``
+```
 npm run dev:client
-``
+```
 
 #### Start server
 Main server
