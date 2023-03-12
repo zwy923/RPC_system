@@ -3,6 +3,7 @@ import { TextField, Button } from '@mui/material/';
 import axios from 'axios';
 
 function NewNoteForm({ topic, onSubmit }) {
+  const [topicName,setTopicName] = useState(topic)
   const [name, setName] = useState('');
   const [text, setText] = useState('');
   const [query, setQuery] = useState('');
@@ -10,7 +11,7 @@ function NewNoteForm({ topic, onSubmit }) {
   const handleSubmit = event => {
     event.preventDefault();
     const timestamp = new Date().toLocaleString();
-    axios.post('http://localhost:1234/notes', { topic, name, text, timestamp, query })
+    axios.post('http://localhost:1234/notes', { topicName, name, text, timestamp, query })
       .then(response => {
         console.log(response.data);
         onSubmit();
@@ -23,6 +24,13 @@ function NewNoteForm({ topic, onSubmit }) {
   return (
     <div>
       <form onSubmit={handleSubmit}>
+      <TextField sx={{margin:2,width:750}}
+          label="Topic name"
+          value={topicName}
+          onChange={event => setTopicName(event.target.value)}
+          fullWidth
+          required
+        />
         <TextField sx={{margin:2,width:750}}
           label="Note name"
           value={name}

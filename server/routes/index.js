@@ -12,16 +12,17 @@ router.get('/', (req, res) => {
 
 // Set up route for creating new notes
 router.post('/notes', async (req, res) => {
-  const { topic, text, name, timestamp, query } = req.body;
+  const { topicName, text, name, timestamp, query } = req.body;
   // Parse the XML data from the file
   const xmlData = fs.readFileSync('notes.xml', 'utf8');
   parser.parseString(xmlData, async (err, result) => {
     if (err) throw err;
     // Find the topic in the XML data or create a new topic if it doesn't exist
-    const topicNode = result.data.topic.find(t => t.$.name === topic);
+    console.log(result.data.$)
+    const topicNode = result.data.topic.find(t => t.$.name === topicName);
     if (!topicNode) {
       result.data.topic.push({
-        $: { name: topic },
+        $: { name: topicName },
         note: []
       });
     }
@@ -42,7 +43,7 @@ router.post('/notes', async (req, res) => {
       }
     }
     result.data.topic.forEach(t => {
-      if (t.$.name === topic) {
+      if (t.$.name === topicName) {
         t.note.push(note);
       }
     });
@@ -56,6 +57,7 @@ router.post('/notes', async (req, res) => {
 
 
 router.get('/topics', (req, res) => {
+  
   // Parse the XML data from the file
   const xmlData = fs.readFileSync('notes.xml', 'utf8');
   parser.parseString(xmlData, (err, result) => {
@@ -89,6 +91,7 @@ router.get('/notes/:topic', (req, res) => {
 
 
 router.get('/wikipedia/:query', (req, res) => {
+  
   const { query } = req.params;
   // Make a request to the Wikipedia API using axios
   axios.get(`https://en.wikipedia.org/w/api.php?action=opensearch&search=${query}&format=json`)

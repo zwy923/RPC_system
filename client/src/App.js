@@ -48,8 +48,6 @@ function App() {
       });
   },[])
 
-
-
   return (
     <div>
       <Grid container spacing={3}>
@@ -71,9 +69,9 @@ function App() {
         <Grid  item xs={12} md={6}>
           <Paper sx={{margin:2}}>
             {selectedTopic ? (
-              <NewNoteForm topic={selectedTopic} onSubmit={handleNoteSubmit} />
+              <NewNoteForm topic={selectedTopic} onSubmit={handleNoteSubmit} key={selectedTopic}/>
             ) : (
-              <div>Please select a topic</div>
+              <div>Please create a topic</div>
             )}
           </Paper>
         </Grid>
