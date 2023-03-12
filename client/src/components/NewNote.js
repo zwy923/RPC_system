@@ -20,7 +20,6 @@ function NewNoteForm({ topic, onSubmit }) {
           onSubmit();
         })
         .catch(error => {
-          console.log(error);
           if (index + 1 < routes.length) {
             tryRoute(index + 1);
           } else {

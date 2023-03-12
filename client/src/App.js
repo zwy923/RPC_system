@@ -40,12 +40,20 @@ function App() {
 
 
     axios.get('http://localhost:1234/topics')
-      .then(response => {
-        setSelectedTopic(response.data[0]);
-      })
-      .catch(error => {
-        console.log(error);
-      });
+    .then(response => {
+      setSelectedTopic(response.data[0]);
+    })
+    .catch(error => {
+      console.log(error);
+      // If the first request fails, try another URL
+      axios.get('http://localhost:4321/topics')
+        .then(response => {
+          setSelectedTopic(response.data[0]);
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    });
   },[])
 
   return (

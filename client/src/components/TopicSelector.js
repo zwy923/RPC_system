@@ -16,7 +16,6 @@ function TopicSelector({ onChange }) {
     setSelectedTopic(response.data[0]);
     })
     .catch(error => {
-      console.log(error);
       // Try the alternate endpoint if the first one fails
       axios.get('http://localhost:4321/topics')
         .then(response => {

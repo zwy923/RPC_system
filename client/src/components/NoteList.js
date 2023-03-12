@@ -11,7 +11,9 @@ function NotesList({ topic }) {
         setNotes(response.data);
       })
       .catch(error => {
-        console.log(error);
+        axios.get(`http://localhost:4321/notes/${topic}`).then(response => {
+          setNotes(response.data);
+        })
       });
   }, [topic]);
 

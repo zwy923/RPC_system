@@ -7,7 +7,7 @@ const parser = new xml2js.Parser();
 const builder = new xml2js.Builder();
 
 router.get('/', (req, res) => {
-  res.send('Main server is running.')
+  res.send('Second server is running.')
 })
 
 // Set up route for creating new notes
