@@ -11,14 +11,25 @@ function NewNoteForm({ topic, onSubmit }) {
   const handleSubmit = event => {
     event.preventDefault();
     const timestamp = new Date().toLocaleString();
-    axios.post('http://localhost:1234/notes', { topicName, name, text, timestamp, query })
-      .then(response => {
-        console.log(response.data);
-        onSubmit();
-      })
-      .catch(error => {
-        console.log(error);
-      });
+    const routes = ['http://localhost:1234/notes', 'http://localhost:4321/notes'];
+  
+    const tryRoute = index => {
+      axios.post(routes[index], { topicName, name, text, timestamp, query })
+        .then(response => {
+          console.log(response.data);
+          onSubmit();
+        })
+        .catch(error => {
+          console.log(error);
+          if (index + 1 < routes.length) {
+            tryRoute(index + 1);
+          } else {
+            console.log('All routes failed');
+          }
+        });
+    };
+  
+    tryRoute(0);
   };
 
   return (

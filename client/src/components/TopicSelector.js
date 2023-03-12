@@ -11,13 +11,23 @@ function TopicSelector({ onChange }) {
 
   useEffect(() => {
     axios.get('http://localhost:1234/topics')
-      .then(response => {
-        setTopics(response.data);
-        setSelectedTopic(response.data[0]);
-      })
-      .catch(error => {
-        console.log(error);
+    .then(response => {
+    setTopics(response.data);
+    setSelectedTopic(response.data[0]);
+    })
+    .catch(error => {
+      console.log(error);
+      // Try the alternate endpoint if the first one fails
+      axios.get('http://localhost:4321/topics')
+        .then(response => {
+          setTopics(response.data);
+          setSelectedTopic(response.data[0]);
+        })
+        .catch(error => {
+          console.log(error);
+          // Handle the error if the alternate endpoint also fails
       });
+  });
   }, []);
 
   const handleTopicChange = event => {
