@@ -27,15 +27,15 @@ function App() {
     console.log(response.data); // 'Main server is running.'
   })
   .catch(error => {
-    console.log(error);
+    console.log('Main server is not running');
   });
 
     axios.get('http://localhost:4321/')
   .then(response => {
-    console.log(response.data); // 'Main server is running.'
+    console.log(response.data); 
   })
   .catch(error => {
-    console.log(error);
+    console.log('Second server is not running');
   });
 
 
