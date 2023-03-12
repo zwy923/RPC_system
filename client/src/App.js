@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Grid, Paper, TextField } from '@mui/material/';
+import { Grid, Paper } from '@mui/material/';
 import TopicSelector from './components/TopicSelector';
 import NotesList from './components/NoteList';
 import NewNoteForm from './components/NewNote';

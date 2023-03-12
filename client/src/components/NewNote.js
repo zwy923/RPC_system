@@ -28,6 +28,7 @@ function NewNoteForm({ topic, onSubmit }) {
           value={name}
           onChange={event => setName(event.target.value)}
           fullWidth
+          required
         />
         <TextField sx={{margin:2,width:750}}
           label="Note text"
@@ -36,6 +37,7 @@ function NewNoteForm({ topic, onSubmit }) {
           fullWidth
           multiline
           rows={4}
+          required
         />
         <TextField
           label="Wikipedia search" sx={{margin:2,width:750}}

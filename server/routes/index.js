@@ -95,6 +95,7 @@ router.get('/wikipedia/:query', (req, res) => {
     .then(response => {
       // Extract the relevant information from the API response
       const [searchQuery, searchResults, searchSnippet, searchUrls] = response.data;
+      
       // Combine the search results into an array of objects
       const results = searchResults.map((result, i) => {
         return {
