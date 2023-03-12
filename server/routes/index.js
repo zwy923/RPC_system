@@ -6,8 +6,7 @@ const xml2js = require('xml2js');
 const parser = new xml2js.Parser();
 const builder = new xml2js.Builder();
 
-
-router.get('/',(req,res)=>{
+router.get('/', (req, res) => {
   res.send('Main server is running.')
 })
 

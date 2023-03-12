@@ -7,8 +7,7 @@
     "install": "cd client && npm install",
     "dev:client": "cd client && npm start",
     "dev:server": "cd server && npm run dev",
-    "dev:server2": "cd server02 && npm run dev",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev:server2": "cd server02 && npm run dev"
   },
   "author": "zwy",
   "license": "ISC"

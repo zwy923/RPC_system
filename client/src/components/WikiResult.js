@@ -24,7 +24,6 @@ function WikipediaSearch({ onSubmit }) {
           label="Search Wikipedia"
           value={query}
           onChange={event => setQuery(event.target.value)}
-          AutoWidth
         />
         <Button type="submit" color="primary" sx={{margin:2}}>Search</Button>
       </form>

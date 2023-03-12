@@ -21,6 +21,24 @@ function App() {
 
 
   useEffect(()=>{
+
+    axios.get('http://localhost:1234/')
+  .then(response => {
+    console.log(response.data); // 'Main server is running.'
+  })
+  .catch(error => {
+    console.log(error);
+  });
+
+    axios.get('http://localhost:4321/')
+  .then(response => {
+    console.log(response.data); // 'Main server is running.'
+  })
+  .catch(error => {
+    console.log(error);
+  });
+
+
     axios.get('http://localhost:1234/topics')
       .then(response => {
         setSelectedTopic(response.data[0]);
