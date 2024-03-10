@@ -1,23 +1,16 @@
-import xmlrpc.client
 import threading
+import xmlrpc.client
 
-def client_task(task_id, topic, text, timestamp):
-    s = xmlrpc.client.ServerProxy('http://localhost:8000')
-    result = s.add_note(topic + f" {task_id}", text, timestamp)
-    print(f"Task {task_id}: Note added result ->", result)
-    
-def main():
-    threads = []
-    for i in range(5):
-        topic = "Test Topic"
-        text = f"Test Note from client {i}"
-        timestamp = "2024-03-10"
-        thread = threading.Thread(target=client_task, args=(i, topic, text, timestamp))
-        threads.append(thread)
-        thread.start()
-    
-    for thread in threads:
-        thread.join()
+def client_thread(thread_id):
+    server = xmlrpc.client.ServerProxy('http://localhost:1234', allow_none=True)
+    response = server.get_notes("Animal Things")
+    print(f"Thread {thread_id}: Response from server: {response}/n")
 
-if __name__ == "__main__":
-    main()
+threads = []
+for i in range(5): # create 5 threads to test the funcation get_notes()
+    t = threading.Thread(target=client_thread, args=(i,))
+    threads.append(t)
+    t.start()
+
+for t in threads:
+    t.join()

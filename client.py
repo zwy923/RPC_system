@@ -5,7 +5,7 @@ import xmlrpc.client
 class NotesClient(QWidget):
     def __init__(self):
         super().__init__()
-        self.server = xmlrpc.client.ServerProxy('http://localhost:8000')
+        self.server = xmlrpc.client.ServerProxy('http://localhost:1234')
         self.initUI()
 
     def getNotesForTopic(self):
@@ -89,7 +89,7 @@ class NotesClient(QWidget):
         if extract and page:
             displayText = f"{extract}\nLink: {page}"
         else:
-            displayText = extract  # 这里，extract 可能是一个错误消息
+            displayText = extract 
         self.notesDisplay.setText(displayText)
 
 def main():

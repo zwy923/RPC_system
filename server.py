@@ -17,7 +17,7 @@ def add_note(topic, name, text, timestamp):
         root = ET.Element('data')
         tree = ET.ElementTree(root)
 
-    # Check if the topic exists and append the note to it
+    # check if the topic exists and append the note to it
     topic_element = None
     for t in root.findall('topic'):
         if t.attrib['name'] == topic:
@@ -65,7 +65,7 @@ def get_notes(topic):
             return notes_list
     return "Topic not found."
 
-server = ThreadedXMLRPCServer(('localhost', 8000), requestHandler=RequestHandler)
+server = ThreadedXMLRPCServer(('localhost', 1234), requestHandler=RequestHandler)
 print("Server running")
 server.register_function(add_note, "add_note")
 server.register_function(query_wikipedia, "query_wikipedia")
