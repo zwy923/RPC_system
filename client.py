@@ -1,54 +1,67 @@
-import tkinter as tk
-from tkinter import simpledialog, messagebox, scrolledtext
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QMessageBox, QLineEdit, QTextEdit
 import xmlrpc.client
+import sys
 
 s = xmlrpc.client.ServerProxy('http://localhost:8000')
 
-class NoteApp(tk.Tk):
+class NoteApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.title("Notebook Client")
-        self.geometry("400x300")
+        self.initUI()
+    
+    def initUI(self):
+        self.setWindowTitle('Notebook Client with Wikipedia Search')
+        self.setGeometry(100, 100, 600, 400)
 
-        self.create_widgets()
+        layout = QVBoxLayout()
 
-    def create_widgets(self):
-        # Add Note Button
-        self.add_note_button = tk.Button(self, text="Add Note", command=self.add_note)
-        self.add_note_button.pack(pady=5)
+        self.topic_input = QLineEdit(self, placeholderText="Enter a topic")
+        layout.addWidget(self.topic_input)
 
-        # Get Notes Button
-        self.get_notes_button = tk.Button(self, text="Get Notes", command=self.get_notes)
-        self.get_notes_button.pack(pady=5)
+        self.note_text = QTextEdit(self, placeholderText="Enter note text here")
+        layout.addWidget(self.note_text)
 
-        # Query Wikipedia Button
-        self.query_wiki_button = tk.Button(self, text="Query Wikipedia", command=self.query_wikipedia)
-        self.query_wiki_button.pack(pady=5)
+        self.timestamp_input = QLineEdit(self, placeholderText="Enter timestamp (YYYY-MM-DD)")
+        layout.addWidget(self.timestamp_input)
+
+        add_note_btn = QPushButton('Add Note', self)
+        add_note_btn.clicked.connect(self.add_note)
+        layout.addWidget(add_note_btn)
+
+        get_notes_btn = QPushButton('Get Notes', self)
+        get_notes_btn.clicked.connect(self.get_notes)
+        layout.addWidget(get_notes_btn)
+
+        wiki_search_btn = QPushButton('Query Wikipedia', self)
+        wiki_search_btn.clicked.connect(self.query_wikipedia)
+        layout.addWidget(wiki_search_btn)
+
+        self.setLayout(layout)
 
     def add_note(self):
-        topic = simpledialog.askstring("Input", "Enter the topic:", parent=self)
-        text = simpledialog.askstring("Input", "Enter text for the note:", parent=self)
-        timestamp = simpledialog.askstring("Input", "Enter timestamp (YYYY-MM-DD):", parent=self)
+        topic = self.topic_input.text()
+        text = self.note_text.toPlainText()
+        timestamp = self.timestamp_input.text()
         result = s.add_note(topic, text, timestamp)
-        messagebox.showinfo("Result", "Note added successfully" if result else "Failed to add note")
+        QMessageBox.information(self, 'Add Note', 'Note added successfully' if result else 'Failed to add note')
 
     def get_notes(self):
-        topic = simpledialog.askstring("Input", "Enter the topic to fetch notes:", parent=self)
+        topic = self.topic_input.text()
         notes = s.get_notes(topic)
-        self.show_notes(notes)
-
-    def show_notes(self, notes):
-        notes_window = tk.Toplevel(self)
-        notes_window.title("Notes")
-        notes_text = scrolledtext.ScrolledText(notes_window, wrap=tk.WORD, width=50, height=10)
-        notes_text.insert(tk.INSERT, notes)
-        notes_text.pack()
+        QMessageBox.information(self, 'Notes', notes)
 
     def query_wikipedia(self):
-        topic = simpledialog.askstring("Input", "Enter the topic to search on Wikipedia:", parent=self)
+        topic = self.topic_input.text()
         result = s.query_wikipedia(topic)
-        messagebox.showinfo("Wikipedia Result", result)
+        if 'error' not in result:
+            info = f"Title: {result['title']}\n\nSummary: {result['extract']}\n\nURL: {result['url']}"
+            QMessageBox.information(self, 'Wikipedia Result', info)
+        else:
+            QMessageBox.warning(self, 'Error', result['error'])
 
-if __name__ == "__main__":
-    app = NoteApp()
-    app.mainloop()
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = NoteApp()
+    ex.show()
+    sys.exit(app.exec_())
+

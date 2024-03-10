@@ -43,9 +43,14 @@ with SimpleXMLRPCServer(('localhost', 8000),
             url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{topic}"
             response = urlopen(url)
             data = json.loads(response.read())
-            return data.get('content_urls', {}).get('desktop', {}).get('page', 'No URL found.')
+            return {
+                'title': data.get('title', 'No title found.'),
+                'extract': data.get('extract', 'No summary available.'),
+                'url': data.get('content_urls', {}).get('desktop', {}).get('page', 'No URL found.')
+            }
         except Exception as e:
-            return str(e)
+            return {'error': str(e)}
+
 
     server.register_function(add_note, 'add_note')
     server.register_function(get_notes, 'get_notes')
