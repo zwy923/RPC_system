@@ -8,7 +8,6 @@ import json
 class RequestHandler(SimpleXMLRPCRequestHandler):
     rpc_paths = ('/RPC2',)
 
-# Create server
 with SimpleXMLRPCServer(('localhost', 8000),
                         requestHandler=RequestHandler) as server:
     server.register_introspection_functions()
@@ -16,10 +15,21 @@ with SimpleXMLRPCServer(('localhost', 8000),
     try:
         tree = ET.parse('notes_database.xml')
         root = tree.getroot()
-    except FileNotFoundError:
+    except FileNotFoundError as e:
+        print(f"Error loading XML database: {e}")
         root = ET.Element("notes")
         tree = ET.ElementTree(root)
 
+    def safe_execute(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                return False
+        return wrapper
+    
+    @safe_execute
     def add_note(topic, text, timestamp):
         for child in root:
             if child.tag == 'note' and child.find('topic').text == topic:
@@ -32,12 +42,14 @@ with SimpleXMLRPCServer(('localhost', 8000),
         tree.write('notes_database.xml')
         return True
 
+    @safe_execute
     def get_notes(topic):
         for child in root:
             if child.tag == 'note' and child.find('topic').text == topic:
                 return ET.tostring(child, encoding='unicode')
         return "Topic not found."
 
+    @safe_execute
     def query_wikipedia(topic):
         try:
             url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{topic}"

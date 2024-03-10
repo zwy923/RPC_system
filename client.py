@@ -2,7 +2,11 @@ from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QMe
 import xmlrpc.client
 import sys
 
-s = xmlrpc.client.ServerProxy('http://localhost:8000')
+try:
+    s = xmlrpc.client.ServerProxy('http://localhost:8000', allow_none=True, use_builtin_types=True, timeout=10)
+except Exception as e:
+    print(f"Failed to connect to server: {e}")
+    sys.exit(1)
 
 class NoteApp(QWidget):
     def __init__(self):
@@ -52,12 +56,15 @@ class NoteApp(QWidget):
 
     def query_wikipedia(self):
         topic = self.topic_input.text()
-        result = s.query_wikipedia(topic)
-        if 'error' not in result:
-            info = f"Title: {result['title']}\n\nSummary: {result['extract']}\n\nURL: {result['url']}"
-            QMessageBox.information(self, 'Wikipedia Result', info)
-        else:
-            QMessageBox.warning(self, 'Error', result['error'])
+        try:
+            result = s.query_wikipedia(topic)
+            if 'error' not in result:
+                info = f"Title: {result['title']}\n\nSummary: {result['extract']}\n\nURL: {result['url']}"
+                QMessageBox.information(self, 'Wikipedia Result', info)
+            else:
+                QMessageBox.warning(self, 'Error', result['error'])
+        except Exception as e:
+            QMessageBox.critical(self, 'RPC Error', f"Failed to query Wikipedia: {e}")
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
