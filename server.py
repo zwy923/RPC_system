@@ -5,7 +5,6 @@ from urllib.request import urlopen
 import xmlrpc.client
 import json
 
-# Restrict to a particular path.
 class RequestHandler(SimpleXMLRPCRequestHandler):
     rpc_paths = ('/RPC2',)
 
@@ -14,7 +13,6 @@ with SimpleXMLRPCServer(('localhost', 8000),
                         requestHandler=RequestHandler) as server:
     server.register_introspection_functions()
 
-    # Load or initialize the XML database
     try:
         tree = ET.parse('notes_database.xml')
         root = tree.getroot()
@@ -53,6 +51,6 @@ with SimpleXMLRPCServer(('localhost', 8000),
     server.register_function(get_notes, 'get_notes')
     server.register_function(query_wikipedia, 'query_wikipedia')
 
-    # Run the server's main loop
+
     print("Server running...")
     server.serve_forever()
