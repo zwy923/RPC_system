@@ -1,73 +1,79 @@
-from xmlrpc.server import SimpleXMLRPCServer
-from xmlrpc.server import SimpleXMLRPCRequestHandler
+from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
+from socketserver import ThreadingMixIn
 import xml.etree.ElementTree as ET
-from urllib.request import urlopen
-import xmlrpc.client
-import json
+import requests
 
 class RequestHandler(SimpleXMLRPCRequestHandler):
     rpc_paths = ('/RPC2',)
 
-with SimpleXMLRPCServer(('localhost', 8000),
-                        requestHandler=RequestHandler) as server:
-    server.register_introspection_functions()
+class ThreadedXMLRPCServer(ThreadingMixIn, SimpleXMLRPCServer):
+    pass
 
+def add_note(topic, name, text, timestamp):
     try:
-        tree = ET.parse('notes_database.xml')
+        tree = ET.parse('db.xml')
         root = tree.getroot()
-    except FileNotFoundError as e:
-        print(f"Error loading XML database: {e}")
-        root = ET.Element("notes")
+    except FileNotFoundError:
+        root = ET.Element('data')
         tree = ET.ElementTree(root)
 
-    def safe_execute(func):
-        def wrapper(*args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except Exception as e:
-                print(f"An error occurred: {e}")
-                return False
-        return wrapper
+    # Check if the topic exists and append the note to it
+    topic_element = None
+    for t in root.findall('topic'):
+        if t.attrib['name'] == topic:
+            topic_element = t
+            break
     
-    @safe_execute
-    def add_note(topic, text, timestamp):
-        for child in root:
-            if child.tag == 'note' and child.find('topic').text == topic:
-                ET.SubElement(child, "entry", timestamp=timestamp).text = text
-                tree.write('notes_database.xml')
-                return True
-        new_note = ET.SubElement(root, "note")
-        ET.SubElement(new_note, "topic").text = topic
-        ET.SubElement(new_note, "entry", timestamp=timestamp).text = text
-        tree.write('notes_database.xml')
-        return True
+    if not topic_element:
+        topic_element = ET.SubElement(root, 'topic', {'name': topic})
 
-    @safe_execute
-    def get_notes(topic):
-        for child in root:
-            if child.tag == 'note' and child.find('topic').text == topic:
-                return ET.tostring(child, encoding='unicode')
-        return "Topic not found."
+    note_element = ET.SubElement(topic_element, 'note', {'name': name})
+    ET.SubElement(note_element, 'text').text = text
+    ET.SubElement(note_element, 'timestamp').text = timestamp
+    
+    tree.write('db.xml')
+    return True
 
-    @safe_execute
-    def query_wikipedia(topic):
-        try:
-            url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{topic}"
-            response = urlopen(url)
-            data = json.loads(response.read())
-            return {
-                'title': data.get('title', 'No title found.'),
-                'extract': data.get('extract', 'No summary available.'),
-                'url': data.get('content_urls', {}).get('desktop', {}).get('page', 'No URL found.')
-            }
-        except Exception as e:
-            return {'error': str(e)}
+def query_wikipedia(topic):
+    try:
+        response = requests.get(f"https://en.wikipedia.org/api/rest_v1/page/summary/{topic}")
+        if response.status_code == 200:
+            data = response.json()
+            return data.get('extract'), data.get('content_urls', {}).get('desktop', {}).get('page')
+        else:
+            return "No Wikipedia page found for this topic.", ""
+    except requests.RequestException:
+        return "Failed to connect to Wikipedia.", ""
 
 
-    server.register_function(add_note, 'add_note')
-    server.register_function(get_notes, 'get_notes')
-    server.register_function(query_wikipedia, 'query_wikipedia')
+def get_notes(topic):
+    try:
+        tree = ET.parse('db.xml')
+        root = tree.getroot()
+    except FileNotFoundError:
+        return "No db found."
 
+    notes_list = []
+    for t in root.findall('topic'):
+        if t.attrib['name'] == topic:
+            for note in t.findall('note'):
+                notes_dict = {}
+                notes_dict['name'] = note.attrib['name']
+                notes_dict['text'] = note.find('text').text
+                notes_dict['timestamp'] = note.find('timestamp').text
+                notes_list.append(notes_dict)
+            return notes_list
+    return "Topic not found."
 
-    print("Server running...")
+server = ThreadedXMLRPCServer(('localhost', 8000), requestHandler=RequestHandler)
+print("Server running")
+server.register_function(add_note, "add_note")
+server.register_function(query_wikipedia, "query_wikipedia")
+server.register_function(get_notes, "get_notes")
+
+try:
     server.serve_forever()
+except KeyboardInterrupt:
+    print("Shutting down server.")
+    server.server_close()
+

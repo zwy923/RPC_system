@@ -1,74 +1,104 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QMessageBox, QLineEdit, QTextEdit
-import xmlrpc.client
 import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QTextEdit
+import xmlrpc.client
 
-try:
-    s = xmlrpc.client.ServerProxy('http://localhost:8000', allow_none=True, use_builtin_types=True, timeout=10)
-except Exception as e:
-    print(f"Failed to connect to server: {e}")
-    sys.exit(1)
-
-class NoteApp(QWidget):
+class NotesClient(QWidget):
     def __init__(self):
         super().__init__()
+        self.server = xmlrpc.client.ServerProxy('http://localhost:8000')
         self.initUI()
+
+    def getNotesForTopic(self):
+        topic = self.topicInput.text()
+        if not topic:
+            self.notesDisplay.setText("Please enter a topic to fetch notes.")
+            return
+        notes = self.server.get_notes(topic)
+        if notes:
+            displayText = ""
+            for note in notes:
+                displayText += f"Title: {note['name']}\nTimestamp: {note['timestamp']}\nNote: {note['text']}\n\n"
+            self.notesDisplay.setText(displayText)
+        else:
+            self.notesDisplay.setText("No notes found for this topic.")
+
     
     def initUI(self):
-        self.setWindowTitle('Notebook Client with Wikipedia Search')
-        self.setGeometry(100, 100, 600, 400)
+        self.setWindowTitle('Wenyue Zhang RPC client')
+        self.setGeometry(150, 150, 900, 700)
 
         layout = QVBoxLayout()
 
-        self.topic_input = QLineEdit(self, placeholderText="Enter a topic")
-        layout.addWidget(self.topic_input)
+        self.topicInput = QLineEdit(self)
+        self.topicInput.setPlaceholderText('Topic')
+        layout.addWidget(self.topicInput)
 
-        self.note_text = QTextEdit(self, placeholderText="Enter note text here")
-        layout.addWidget(self.note_text)
+        self.nameInput = QLineEdit(self)
+        self.nameInput.setPlaceholderText('Note Title')
+        layout.addWidget(self.nameInput)
 
-        self.timestamp_input = QLineEdit(self, placeholderText="Enter timestamp (YYYY-MM-DD)")
-        layout.addWidget(self.timestamp_input)
+        self.textInput = QTextEdit(self)
+        self.textInput.setPlaceholderText('Write note here...')
+        layout.addWidget(self.textInput)
 
-        add_note_btn = QPushButton('Add Note', self)
-        add_note_btn.clicked.connect(self.add_note)
-        layout.addWidget(add_note_btn)
+        self.timestampInput = QLineEdit(self)
+        self.timestampInput.setPlaceholderText('Timestamp (MM/DD/YY - HH:MM:SS)')
+        layout.addWidget(self.timestampInput)
 
-        get_notes_btn = QPushButton('Get Notes', self)
-        get_notes_btn.clicked.connect(self.get_notes)
-        layout.addWidget(get_notes_btn)
+        addButton = QPushButton('Add Note', self)
+        addButton.clicked.connect(self.addNote)
+        layout.addWidget(addButton)
 
-        wiki_search_btn = QPushButton('Query Wikipedia', self)
-        wiki_search_btn.clicked.connect(self.query_wikipedia)
-        layout.addWidget(wiki_search_btn)
+        getNotesButton = QPushButton('Get Notes for Topic', self)
+        getNotesButton.clicked.connect(self.getNotesForTopic)
+        layout.addWidget(getNotesButton)
+        
+        wikiButton = QPushButton('Query Wikipedia by topic', self)
+        wikiButton.clicked.connect(self.queryWikipedia)
+        layout.addWidget(wikiButton)
+        
+        self.notesDisplay = QTextEdit(self)
+        self.notesDisplay.setReadOnly(True)
+        layout.addWidget(self.notesDisplay)
 
         self.setLayout(layout)
 
-    def add_note(self):
-        topic = self.topic_input.text()
-        text = self.note_text.toPlainText()
-        timestamp = self.timestamp_input.text()
-        result = s.add_note(topic, text, timestamp)
-        QMessageBox.information(self, 'Add Note', 'Note added successfully' if result else 'Failed to add note')
 
-    def get_notes(self):
-        topic = self.topic_input.text()
-        notes = s.get_notes(topic)
-        QMessageBox.information(self, 'Notes', notes)
+    def displayNotes(self):
+        topic = self.topicInput.text()
+        notes = self.server.get_notes(topic)
+        if isinstance(notes, list):
+            notes_str = '\n'.join([f"{note['name']} ({note['timestamp']}): {note['text']}" for note in notes])
+            self.notesDisplay.setText(notes_str)
+        else:
+            self.notesDisplay.setText(notes)
 
-    def query_wikipedia(self):
-        topic = self.topic_input.text()
-        try:
-            result = s.query_wikipedia(topic)
-            if 'error' not in result:
-                info = f"Title: {result['title']}\n\nSummary: {result['extract']}\n\nURL: {result['url']}"
-                QMessageBox.information(self, 'Wikipedia Result', info)
-            else:
-                QMessageBox.warning(self, 'Error', result['error'])
-        except Exception as e:
-            QMessageBox.critical(self, 'RPC Error', f"Failed to query Wikipedia: {e}")
+    def addNote(self):
+        topic = self.topicInput.text()
+        name = self.nameInput.text()
+        text = self.textInput.toPlainText()
+        timestamp = self.timestampInput.text()
+        if self.server.add_note(topic, name, text, timestamp):
+            self.notesDisplay.setText(f"Note added to topic: {topic}")
+        else:
+            self.notesDisplay.setText("Failed to add note.")
+
+    def queryWikipedia(self):
+        topic = self.topicInput.text()
+        extract, page = self.server.query_wikipedia(topic)
+        if extract and page:
+            displayText = f"{extract}\nLink: {page}"
+        else:
+            displayText = extract  # 这里，extract 可能是一个错误消息
+        self.notesDisplay.setText(displayText)
+
+def main():
+    app = QApplication(sys.argv)
+    client = NotesClient()
+    client.show()
+    sys.exit(app.exec_())
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    ex = NoteApp()
-    ex.show()
-    sys.exit(app.exec_())
+    main()
+
 
